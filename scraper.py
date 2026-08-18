@@ -48,5 +48,3 @@ def scrape_zendesk_articles():
             
         print(f"Saved: {file_path}")
 
-if __name__ == "__main__":
-    scrape_zendesk_articles()

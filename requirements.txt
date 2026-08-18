@@ -1,0 +1,4 @@
+requests
+markdownify
+google-genai
+python-dotenv
