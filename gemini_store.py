@@ -26,7 +26,7 @@ load_dotenv()
 
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-
+STORE_NAME = os.getenv("GEMINI_FILE_SEARCH_STORE_NAME")
 if not API_KEY:
     raise RuntimeError(
         "GEMINI_API_KEY was not found in .env"
@@ -515,3 +515,53 @@ def sync_store():
     verify_store(store)
 
     return result
+
+def ask_ai(question):
+
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=question,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            tools=[
+                types.Tool(
+                    file_search=types.FileSearch(
+                        file_search_store_names=[STORE_NAME]
+                    )
+                )
+            ],
+        ),
+    )
+
+    print("\n========================================")
+    print("OPTIBOT")
+    print("========================================")
+    print(response.text)
+
+    if response.candidates:
+        metadata = response.candidates[0].grounding_metadata
+
+        if metadata and metadata.grounding_chunks:
+            print("\n========================================")
+            print("RETRIEVED SOURCES")
+            print("========================================")
+
+            seen = set()
+
+            for chunk in metadata.grounding_chunks:
+                if chunk.retrieved_context:
+                    title = chunk.retrieved_context.title
+                    store_name = (
+                        chunk.retrieved_context.file_search_store
+                    )
+
+                    key = (store_name, title)
+
+                    if key not in seen:
+                        seen.add(key)
+
+                        print(f"Store: {store_name}")
+                        print(f"File : {title}")
+
+if __name__ == "__main__":
+    ask_ai("How to Use the Google?")
